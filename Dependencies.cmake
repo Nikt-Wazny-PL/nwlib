@@ -1,0 +1,3 @@
+set(FETCHCONTENT_QUIET OFF CACHE BOOL "" FORCE)
+
+include(FetchContent)
