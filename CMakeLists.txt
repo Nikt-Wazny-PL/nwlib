@@ -6,6 +6,4 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 project(mwlib LANGUAGES CXX)
 project(mwlib LANGUAGES C)
 
-include("${CMAKE_SOURCE_DIR}/Dependencies.cmake")
-
 add_subdirectory("${CMAKE_SOURCE_DIR}/nwlib")
