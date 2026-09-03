@@ -1,7 +1,2 @@
 CompileFlags:
   CompilationDatabase: _Build 
-
-  Add:
-    - -std=c++26
-    - -Wno-gnu-anonymous-struct
-    - -Wno-c99-designator
