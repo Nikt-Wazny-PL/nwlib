@@ -17,11 +17,11 @@ public:
 	constexpr static bool can_reallocate_without_ownership { false }; // Can reallocate when !m_buffer.has_ownership() ?
 
 public:
-	arena()                                                  = default;
+	arena() = default;
 	arena(void* buffer, size_t capacity) : m_buffer(buffer, capacity) {}
 	explicit arena(size_t capacity)      : m_buffer(capacity) {}
 	explicit arena(buffer&& buffer)      : m_buffer(std::move(buffer)) {}
-	arena(const arena& other)                                = delete;
+	arena(const arena& other) = delete;
 	arena(arena&& other) noexcept;
 
 	void*    get_memory()    const { return m_buffer.get_memory(); }
@@ -30,9 +30,9 @@ public:
 	size_t   get_offset()    const { return m_offset; }
 	size_t   get_remaining() const { return get_capacity() - get_offset(); }
 
-	void* allocate(size_t size, size_t alignment             = alignof(::max_align_t));
+	void* allocate(size_t size, size_t alignment = alignof(::max_align_t));
 
-	arena& operator=(const arena& other)                     = delete;
+	arena& operator=(const arena& other) = delete;
 	arena& operator=(arena&& other) noexcept;
 
 private:
@@ -48,12 +48,12 @@ struct arena_allocator
 {
 	arena& owner;
 
-	using value_type                                         = T;
+	using value_type = T;
 	
-	using propagate_on_container_copy_assignment             = std::true_type;
-	using propagate_on_container_move_assignment             = std::true_type;
-	using propagate_on_container_swap                        = std::true_type;
-	using is_always_equal                                    = std::false_type;
+	using propagate_on_container_copy_assignment = std::true_type;
+	using propagate_on_container_move_assignment = std::true_type;
+	using propagate_on_container_swap            = std::true_type;
+	using is_always_equal                        = std::false_type;
 
 	explicit arena_allocator(arena& arena)
 		: owner(arena) {}
@@ -73,24 +73,24 @@ class arena_box<void>
 {
 	template<typename> friend class arena_box;
 public:
-	arena_box()                                              = default;
-	arena_box(arena& owner, size_t size, size_t alignment    = alignof(::max_align_t))
+	arena_box() = default;
+	arena_box(arena& owner, size_t size, size_t alignment = alignof(::max_align_t))
 		: m_owner(&owner), m_size(size)
 	{
-		uint8_t* const u8instance                               = (uint8_t*)owner.allocate(size, alignment);
-		m_offset                                                = u8instance - owner.get_u8memory();
+		uint8_t* const u8instance = (uint8_t*)owner.allocate(size, alignment);
+		m_offset = u8instance - owner.get_u8memory();
 	}
-	arena_box(const arena_box<void>& other)                  = delete;
+	arena_box(const arena_box<void>& other) = delete;
 	arena_box(arena_box<void>&& other) noexcept
 		: m_owner(other.m_owner)
 		, m_offset(other.m_offset)
 		, m_size(other.m_size)
 	{
-		other.m_owner                                           = nullptr;
-		other.m_offset                                          = SIZE_MAX;
-		other.m_size                                            = 0uz;
+		other.m_owner  = nullptr;
+		other.m_offset = SIZE_MAX;
+		other.m_size   = 0uz;
 	}
-	~arena_box()                                             = default;
+	~arena_box() = default;
 
 	template<typename T, typename... TArgs>
 	arena_box<T> as(TArgs&&... args) const
@@ -115,13 +115,13 @@ public:
 	{
 		if (this != &other)
 		{
-			m_owner                                                = other.m_owner;
-			m_offset                                               = other.m_offset;
-			m_size                                                 = other.m_size;
+			m_owner  = other.m_owner;
+			m_offset = other.m_offset;
+			m_size   = other.m_size;
 
-			other.m_owner                                          = nullptr;
-			other.m_offset                                         = SIZE_MAX;
-			other.m_size                                           = 0uz;
+			other.m_owner  = nullptr;
+			other.m_offset = SIZE_MAX;
+			other.m_size   = 0uz;
 		}
 
 		return *this;
@@ -140,15 +140,15 @@ class arena_box
 {
 	template<typename> friend class arena_box;
 public:
-	arena_box()                                              = default;
+	arena_box() = default;
 	template<typename... TArgs>
 	arena_box(arena& owner, TArgs&&... args)
 		: m_owner(&owner)
 	{
-		uint8_t* const u8instance                               = (uint8_t*)owner.allocate(sizeof(T), alignof(T));
+		uint8_t* const u8instance = (uint8_t*)owner.allocate(sizeof(T), alignof(T));
 		new (u8instance) T(std::forward<TArgs>(args)...);
 
-		m_offset                                                = u8instance - owner.get_u8memory();
+		m_offset = u8instance - owner.get_u8memory();
 	}
 	template<typename... TArgs>
 	arena_box(const arena_box<void>& void_box, TArgs&&... args)
@@ -157,13 +157,13 @@ public:
 	{
 		new (get()) T(std::forward<TArgs>(args)...);
 	}
-	arena_box(const arena_box<T>& other)                     = delete;
+	arena_box(const arena_box<T>& other) = delete;
 	arena_box(arena_box<T>&& other) noexcept
 		: m_owner(other.m_owner)
 		, m_offset(other.m_offset)
 	{
-		other.m_owner                                           = nullptr;
-		other.m_offset                                          = SIZE_MAX;
+		other.m_owner  = nullptr;
+		other.m_offset = SIZE_MAX;
 	}
 	~arena_box() { if constexpr (std::is_trivially_default_constructible_v<T>) if (is_valid()) get()->~T(); }
 
@@ -183,11 +183,11 @@ public:
 			if (is_valid())
 				get()->~T();
 
-			m_owner                                                = other.m_owner;
-			m_offset                                               = other.m_offset;
+			m_owner  = other.m_owner;
+			m_offset = other.m_offset;
 
-			other.m_owner                                          = nullptr;
-			other.m_offset                                         = SIZE_MAX;
+			other.m_owner  = nullptr;
+			other.m_offset = SIZE_MAX;
 		}
 
 		return *this;
@@ -199,10 +199,10 @@ public:
 	// std::enable_if_t was required because the compiler saw that T could be potentially 'void' and 'void&' is invalid code
 	//                  and it only saw in in this implementation and not in the T[] implementation. Love the C++ compiler [here: clang++].
 
-	template<typename U                                      = T>
+	template<typename U = T>
 	std::enable_if_t<!std::is_void_v<U>, const U&> operator*() const { assert(is_valid()); return *get(); }
 
-	template<typename U                                      = T>
+	template<typename U = T>
 	std::enable_if_t<!std::is_void_v<U>, U&> operator*() { assert(is_valid()); return *get(); }
 
 	operator bool() const { return is_valid(); }
@@ -210,9 +210,9 @@ public:
 	operator arena_box<void>() const
 	{
 		arena_box<void> result {};
-		result.m_owner                                          = m_owner;
-		result.m_offset                                         = m_offset;
-		result.m_size                                           = sizeof(T);
+		result.m_owner  = m_owner;
+		result.m_offset = m_offset;
+		result.m_size   = sizeof(T);
 
 		return result;
 	}
@@ -227,35 +227,35 @@ class arena_box<T[]>
 {
 	template<typename> friend class arena_box;
 public:
-	arena_box()                                              = default;
+	arena_box() = default;
 	template<typename... TArgs>
 	arena_box(arena& owner, size_t length)
 		: m_owner(&owner), m_length(length)
 	{
-		uint8_t* const u8instance                               = (uint8_t*)owner.allocate(sizeof(T) * length, alignof(T));
-		m_offset                                                = u8instance - owner.get_u8memory();
+		uint8_t* const u8instance = (uint8_t*)owner.allocate(sizeof(T) * length, alignof(T));
+		m_offset = u8instance - owner.get_u8memory();
 
-		T* const instances                                      = get();
+		T* const instances = get();
 
-		for (size_t i                                           = 0; i < length; i++)
+		for (size_t i = 0; i < length; i++)
 			new (instances + i) T();
 	}
 	template<typename... TArgs>
 	arena_box(const arena_box<void>& void_box, size_t length)
 		: m_owner(void_box.m_owner), m_offset(void_box.m_offset), m_length(length)
 	{
-		for (size_t i                                           = 0; i < length; i++)
+		for (size_t i = 0; i < length; i++)
 			new (get() + i) T();
 	}
-	arena_box(const arena_box<T[]>& other)                   = delete;
+	arena_box(const arena_box<T[]>& other) = delete;
 	arena_box(arena_box<T[]>&& other) noexcept
 		: m_owner(other.m_owner)
 		, m_offset(other.m_offset)
 		, m_length(other.m_length)
 	{
-		other.m_owner                                           = nullptr;
-		other.m_offset                                          = SIZE_MAX;
-		other.m_length                                          = 0uz;
+		other.m_owner  = nullptr;
+		other.m_offset = SIZE_MAX;
+		other.m_length = 0uz;
 	}
 	~arena_box()
 	{
@@ -264,9 +264,9 @@ public:
 			if (!is_valid())
 				return;
 
-			T* const pointer                                       = get();
+			T* const pointer = get();
 			
-			for (size_t i                                          = 0; i < m_length; i++)
+			for (size_t i = 0; i < m_length; i++)
 				pointer[i].~T();
 		}
 	}
@@ -294,13 +294,13 @@ public:
 			if (is_valid())
 				get()->~T();
 
-			m_owner                                                = other.m_owner;
-			m_offset                                               = other.m_offset;
-			m_length                                               = other.m_length;
+			m_owner  = other.m_owner;
+			m_offset = other.m_offset;
+			m_length = other.m_length;
 
-			other.m_owner                                          = nullptr;
-			other.m_offset                                         = SIZE_MAX;
-			other.m_length                                         = 0uz;
+			other.m_owner  = nullptr;
+			other.m_offset = SIZE_MAX;
+			other.m_length = 0uz;
 		}
 
 		return *this;
@@ -314,9 +314,9 @@ public:
 	operator arena_box<void>() const
 	{
 		arena_box<void> result {};
-		result.m_owner                                          = m_owner;
-		result.m_offset                                         = m_offset;
-		result.m_size                                           = get_size();
+		result.m_owner  = m_owner;
+		result.m_offset = m_offset;
+		result.m_size   = get_size();
 		
 		return result;
 	}
