@@ -4,8 +4,9 @@ A small, dependency-free C++23 utility library made by Nikt-Wazny-PL. More-or-le
 ## Sub-libraries
 
 ### `nw::stl` - Experimental
-
-
+  `nw::stl` is a collection of stl-like containers - strings, vectors, iterators etc.
+  
+  * `nw::mem::iterator<TIterable, Type>` - A basic forward/reverse iterator.
 ### `nw::mem`
   `nw::mem` is a collection of memory-management utilities.
 
