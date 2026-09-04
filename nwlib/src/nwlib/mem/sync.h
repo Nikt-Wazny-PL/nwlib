@@ -17,7 +17,7 @@ public:
 	sync(sync<T>&&) noexcept = default;
 	~sync() = default;
 
-	template<typename TFn>
+	template<typename TFn> // Ugly af but works (?)
 	auto access(TFn&& func) -> decltype(std::declval<TFn>()(std::declval<ref<T>&>()))
 	{
 		std::scoped_lock<std::mutex> lock(m_mutex);
