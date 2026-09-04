@@ -425,6 +425,7 @@ using arena_u8string  = basic_arena_string<char8_t>;
 using arena_u16string = basic_arena_string<char16_t>;
 using arena_u32string = basic_arena_string<char32_t>;
 
+
 #ifdef NWLIB_DEFINE_EXTERN_STRING_CLASSES
 extern template class basic_string<char>;
 extern template class basic_string<wchar_t>;
