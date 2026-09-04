@@ -3,27 +3,28 @@ A small, dependency-free C++23 utility library made by Nikt-Wazny-PL. More-or-le
 
 ## Sub-libraries
 
-### `nwlib::fs` - Experimental
-  `nwlib::fs` is an experimental set of filesystem utilities.
+### `nw::fs` - Experimental
+  `nw::fs` is an experimental set of filesystem utilities.
   
-  * `nwlib::fs::path` - A simple `std::filesystem::path` alternative that can act as both an owning string and a non-owning view.
+  * `nw::fs::path` - A simple `std::filesystem::path` alternative that can act as both an owning string and a non-owning view.
 
-### `nwlib::mem`
-  `nwlib::mem` is a collection of memory-management utilities.
+### `nw::mem`
+  `nw::mem` is a collection of memory-management utilities.
 
-  * `nwlib::mem::arena` - A simple arena/bump allocator.
-  * `nwlib::mem::arena_box<T>` - A handle-based, reallocation-safe container for objects of type `T`. Also supports `T[]`.
-  * `nwlib::mem::buffer` - A simple raw memory buffer containing a pointer, capacity, and ownership flag.
-  * `nwlib::mem::box<T, TDestroyer>` - A simple `std::unique_ptr`-like owning pointer. There is no particular reason to use it over `std::unique_ptr`; it's mainly provided as part of the library's own memory utilities.
-  * `nwlib::mem::ref<T>` - An intrusive, atomically reference-counted smart pointer.
-  * `nwlib::mem::weak<T>` - A weak reference for `nwlib::mem::ref` objects.
-  * `nwlib::mem::ref_counted` - Base class for objects managed by `nwlib::mem::ref`.
+  * `nw::mem::arena` - A simple arena/bump allocator.
+  * `nw::mem::arena_box<T>` - A handle-based, reallocation-safe container for objects of type `T`. Also supports `T[]`.
+  * `nw::mem::buffer` - A simple raw memory buffer containing a pointer, capacity, and ownership flag.
+  * `nw::mem::box<T, TDestroyer>` - A simple `std::unique_ptr`-like owning pointer. There is no particular reason to use it over `std::unique_ptr`; it's mainly provided as part of the library's own memory utilities.
+  * `nw::mem::ref<T>` - An intrusive, atomically reference-counted smart pointer.
+  * `nw::mem::sync<T>` - A wrapper `nw::mem::ref` and a `std::mutex` that gurantees thread-safe acceses.
+  * `nw::mem::weak<T>` - A weak reference for `nw::mem::ref` objects.
+  * `nw::mem::ref_counted` - Base class for objects managed by `nw::mem::ref`.
 
-### `nwlib::utils`
-  `nwlib::utils` is more-or-less a "random bullshit go" collection of utilities that don't fit neatly into another category.
+### `nw::utils`
+  `nw::utils` is more-or-less a "random bullshit go" collection of utilities that don't fit neatly into another category.
 
-  * `nwlib::utils::random` - A lightweight pseudo-random number generator based on MurmurHash64.
-  * `nwlib::utils::uuid` - A 128-bit randomly generated identifier. It does not conform to any UUID standard.
+  * `nw::utils::random` - A lightweight pseudo-random number generator based on MurmurHash64.
+  * `nw::utils::uuid` - A 128-bit randomly generated identifier. It does not conform to any UUID standard.
 
 ## Supported Platforms
   Currently, NwLib officially supports:
