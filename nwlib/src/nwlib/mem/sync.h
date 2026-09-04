@@ -31,6 +31,7 @@ public:
 	sync<T>& operator=(sync<T>&&) noexcept = default;
 
 private:
+	// TODO: Add control block
 	ref<T>     m_pointer {};
 	std::mutex m_mutex   {};
 };

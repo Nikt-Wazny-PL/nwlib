@@ -3,10 +3,8 @@ A small, dependency-free C++23 utility library made by Nikt-Wazny-PL. More-or-le
 
 ## Sub-libraries
 
-### `nw::fs` - Experimental
-  `nw::fs` is an experimental set of filesystem utilities.
-  
-  * `nw::fs::path` - A simple `std::filesystem::path` alternative that can act as both an owning string and a non-owning view.
+### `nw::stl` - Experimental
+
 
 ### `nw::mem`
   `nw::mem` is a collection of memory-management utilities.
