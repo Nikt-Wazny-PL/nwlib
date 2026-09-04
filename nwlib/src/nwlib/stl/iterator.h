@@ -81,10 +81,64 @@ private:
 	pointer_t m_pointer {};
 };
 
+template<typename TIterable, iterator_type Type>
+class const_iterator
+{
+public:
+	using container_t = TIterable;
+
+	using self_t   = const_iterator<TIterable, Type>;
+	using offset_t = detail::offset_t;
+
+	using value_t           = detail::value_type_t<container_t>;
+	using const_value_t     = const value_t;
+	using pointer_t         = value_t*;
+	using const_pointer_t   = const value_t*;
+	using reference_t       = value_t&;
+	using const_reference_t = const value_t&;
+	using temporary_t       = value_t&&;
+	using const_temporary_t = const value_t&&;
+
+public:
+	const_iterator() = delete;
+	explicit const_iterator(pointer_t pointer)
+		: m_pointer(pointer) {}
+	const_iterator(const self_t& other) = default;
+	const_iterator(self_t&& other) noexcept = default;
+
+	self_t& operator+=(offset_t offset)       { m_pointer += offset * detail::sign(Type); return *this; }
+	self_t  operator+ (offset_t offset) const { return self_t(m_pointer) += offset; }
+	self_t& operator++()                      { return *this += 1z; }
+	self_t  operator++(int)                   { return self_t(m_pointer++); }
+
+	self_t& operator-=(offset_t offset)       { m_pointer -= offset * detail::sign(Type); return *this; }
+	self_t  operator- (offset_t offset) const { return self_t(m_pointer) -= offset; }
+	self_t& operator--()                      { return *this -= 1z; }
+	self_t  operator--(int)                   { return self_t(m_pointer--); }
+
+	self_t& operator=(const self_t& other) = default;
+	self_t& operator=(self_t&& other) noexcept = default;
+
+	auto operator<=>(const self_t& other) const = default;
+
+	const_pointer_t   operator->() const { return  m_pointer; }
+	const_reference_t operator*() const  { return *m_pointer; }
+	
+private:
+	const_pointer_t m_pointer {};
+};
+
 template<typename TIterable> 
 using forward_iterator = iterator<TIterable, iterator_type::forward>;
 
 template<typename TIterable> 
 using reverse_iterator = iterator<TIterable, iterator_type::reverse>;
+
+template<typename TIterable> 
+using const_forward_iterator = const_iterator<TIterable, iterator_type::forward>;
+
+template<typename TIterable> 
+using const_reverse_iterator = const_iterator<TIterable, iterator_type::reverse>;
+
 
 }
