@@ -101,7 +101,7 @@ public:
 
 public:
 	const_iterator() = delete;
-	explicit const_iterator(pointer_t pointer)
+	explicit const_iterator(const_pointer_t pointer)
 		: m_pointer(pointer) {}
 	const_iterator(const self_t& other) = default;
 	const_iterator(self_t&& other) noexcept = default;

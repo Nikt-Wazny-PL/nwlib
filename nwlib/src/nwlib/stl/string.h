@@ -31,12 +31,12 @@ constexpr bool is_character
 template<typename T>
 constexpr auto get_default_cstr() -> std::enable_if_t<is_character<T>, const T*>
 {
-	return std::is_same_v<T, char>     ?   ""
-		:  std::is_same_v<T, wchar_t>  ?  L""
-		:  std::is_same_v<T, char8_t>  ? u8""
-		:  std::is_same_v<T, char16_t> ?  u""
-		:  std::is_same_v<T, char32_t> ?  U""
-		:  nullptr;
+	if constexpr (std::is_same_v<T, char>)          return   "";
+	else if constexpr (std::is_same_v<T, wchar_t>)  return  L"";
+	else if constexpr (std::is_same_v<T, char8_t>)  return u8"";
+	else if constexpr (std::is_same_v<T, char16_t>) return  u"";
+	else if constexpr (std::is_same_v<T, char32_t>) return  U"";
+	else return nullptr;
 }
 
 template<typename T>
@@ -106,7 +106,7 @@ public:
 	using self_t = basic_string<T>;
 
 public:
-	basic_string() : basic_string("") {}
+	basic_string() : basic_string(string_utils::get_default_cstr<T>()) {}
 	basic_string(const T* cstring, length_t length = string_utils::max_length)
 	{
 		length = std::min(length, string_utils::calculate_length(cstring));
@@ -130,19 +130,19 @@ public:
 		other.m_length = 0uz;
 	}
 
-	forward_iterator       begin()        { return { m_buffer.as<T>() }; }
-	forward_iterator       end()          { return { m_buffer.as<T>() + m_length }; }
-	const_forward_iterator begin()  const { return { m_buffer.as<T>() }; }
-	const_forward_iterator end()    const { return { m_buffer.as<T>() + m_length }; }
-	const_forward_iterator cbegin() const { return { m_buffer.as<T>() }; }
-	const_forward_iterator cend()   const { return { m_buffer.as<T>() + m_length }; }
+	forward_iterator       begin()        { return forward_iterator(m_buffer.as<T>()); }
+	forward_iterator       end()          { return forward_iterator(m_buffer.as<T>() + m_length); }
+	const_forward_iterator begin()  const { return const_forward_iterator(m_buffer.as<const T>()); }
+	const_forward_iterator end()    const { return const_forward_iterator(m_buffer.as<const T>() + m_length); }
+	const_forward_iterator cbegin() const { return const_forward_iterator(m_buffer.as<const T>()); }
+	const_forward_iterator cend()   const { return const_forward_iterator(m_buffer.as<const T>() + m_length); }
 
-	reverse_iterator       rbegin()        { return { m_buffer.as<T>() + m_length - 1 }; }
-	reverse_iterator       rend()          { return { m_buffer.as<T>() - 1 }; }
-	const_reverse_iterator rbegin()  const { return { m_buffer.as<T>() + m_length - 1 }; }
-	const_reverse_iterator rend()    const { return { m_buffer.as<T>() - 1 }; }
-	const_reverse_iterator rcbegin() const { return { m_buffer.as<T>() + m_length - 1 }; }
-	const_reverse_iterator rcend()   const { return { m_buffer.as<T>() - 1 }; }
+	reverse_iterator       rbegin()        { return reverse_iterator(m_buffer.as<T>() + m_length - 1); }
+	reverse_iterator       rend()          { return reverse_iterator(m_buffer.as<T>() - 1); }
+	const_reverse_iterator rbegin()  const { return const_reverse_iterator(m_buffer.as<const T>() + m_length - 1); }
+	const_reverse_iterator rend()    const { return const_reverse_iterator(m_buffer.as<const T>() - 1); }
+	const_reverse_iterator rcbegin() const { return const_reverse_iterator(m_buffer.as<const T>() + m_length - 1); }
+	const_reverse_iterator rcend()   const { return const_reverse_iterator(m_buffer.as<const T>() - 1); }
 
 	bool reserve(length_t new_capacity)
 	{
@@ -287,7 +287,7 @@ public:
 	using self_t = basic_arena_string<T>;
 
 public:
-	basic_arena_string(mem::arena& arena) : basic_arena_string(arena, "") {}
+	basic_arena_string(mem::arena& arena) : basic_arena_string(arena, string_utils::get_default_cstr<T>()) {}
 	basic_arena_string(mem::arena& arena, const T* cstring, length_t length = string_utils::max_length)
 	{
 		length = std::min(length, string_utils::calculate_length(cstring));
@@ -302,7 +302,7 @@ public:
 		m_length = length;
 	}
 	basic_arena_string(const self_t& other)
-		: m_buffer(other.m_buffer.get_owner(), other.get_length() + 1)
+		: m_buffer(*other.m_buffer.get_owner(), other.get_length() + 1)
 		, m_length(other.m_length)
 	{
 		for (length_t i = 0uz; i < m_length; i++)
@@ -317,19 +317,19 @@ public:
 		other.m_length = 0uz;
 	}
 
-	forward_iterator       begin()        { return { m_buffer.get() }; }
-	forward_iterator       end()          { return { m_buffer.get() + m_length }; }
-	const_forward_iterator begin()  const { return { m_buffer.get() }; }
-	const_forward_iterator end()    const { return { m_buffer.get() + m_length }; }
-	const_forward_iterator cbegin() const { return { m_buffer.get() }; }
-	const_forward_iterator cend()   const { return { m_buffer.get() + m_length }; }
+	forward_iterator       begin()        { return forward_iterator(m_buffer.get()); }
+	forward_iterator       end()          { return forward_iterator(m_buffer.get() + m_length); }
+	const_forward_iterator begin()  const { return const_forward_iterator(m_buffer.get()); }
+	const_forward_iterator end()    const { return const_forward_iterator(m_buffer.get() + m_length); }
+	const_forward_iterator cbegin() const { return const_forward_iterator(m_buffer.get()); }
+	const_forward_iterator cend()   const { return const_forward_iterator(m_buffer.get() + m_length); }
 
-	reverse_iterator       rbegin()        { return { m_buffer.get() + m_length - 1 }; }
-	reverse_iterator       rend()          { return { m_buffer.get() - 1 }; }
-	const_reverse_iterator rbegin()  const { return { m_buffer.get() + m_length - 1 }; }
-	const_reverse_iterator rend()    const { return { m_buffer.get() - 1 }; }
-	const_reverse_iterator rcbegin() const { return { m_buffer.get() + m_length - 1 }; }
-	const_reverse_iterator rcend()   const { return { m_buffer.get() - 1 }; }
+	reverse_iterator       rbegin()        { return reverse_iterator(m_buffer.get() + m_length - 1); }
+	reverse_iterator       rend()          { return reverse_iterator(m_buffer.get() - 1); }
+	const_reverse_iterator rbegin()  const { return const_reverse_iterator(m_buffer.get() + m_length - 1); }
+	const_reverse_iterator rend()    const { return const_reverse_iterator(m_buffer.get() - 1); }
+	const_reverse_iterator rcbegin() const { return const_reverse_iterator(m_buffer.get() + m_length - 1); }
+	const_reverse_iterator rcend()   const { return const_reverse_iterator(m_buffer.get() - 1); }
 
 	bool reserve(length_t new_capacity)
 	{
@@ -362,7 +362,7 @@ public:
 	}
 
 	bool      is_empty()     const { return !m_buffer || m_length == 0; }
-	length_t  get_capacity() const { return m_buffer.get_capacity() / sizeof(T); }
+	length_t  get_capacity() const { return m_buffer.get_length(); }
 	pointer_t get_buffer()   const { return m_buffer.get(); }
 	length_t  get_length()   const { return m_length; }
 	cstring_t cstring()      const { return m_buffer.get(); }
@@ -370,19 +370,19 @@ public:
 	self_t substring(length_t offset, length_t length) const
 	{
 		if (offset > m_length)
-			return self_t();
+			return self_t(*m_buffer.get_owner(), string_utils::get_default_cstr<T>());
 
 		if (m_length - offset > length)
 			length = m_length - offset;
 
-		return self_t(cstring() + offset, length);
+		return self_t(*m_buffer.get_owner(), cstring() + offset, length);
 	}
 
 	self_t& operator=(const self_t& other)
 	{
 		if (this != &other)
 		{
-			m_buffer = mem::buffer(other.m_buffer.get_capacity());
+			m_buffer = mem::arena_box<T[]>(*other.m_buffer.get_owner(), other.get_capacity());
 			m_length = other.m_length;
 
 			for (length_t i = 0uz; i < m_length; i++)
