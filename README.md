@@ -7,6 +7,9 @@ A small, dependency-free C++23 utility library made by Nikt-Wazny-PL. More-or-le
   `nw::stl` is a collection of stl-like containers - strings, vectors, iterators etc.
   
   * `nw::mem::iterator<TIterable, Type>` - A basic forward/reverse iterator.
+  * `nw::mem::basic_string<T>` - A basic string container.
+  * `nw::mem::basic_arena_string<T>` - A basic arena owned string container.
+  
 ### `nw::mem`
   `nw::mem` is a collection of memory-management utilities.
 
