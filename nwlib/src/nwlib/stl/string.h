@@ -243,6 +243,34 @@ public:
 		return *(m_buffer.as<T>() + index);
 	}
 
+	self_t& operator+=(T _char)
+	{
+		if (m_length + 2 >= get_capacity())
+			reserve(get_capacity() + get_capacity() / 2);
+		else
+			make_owned();
+
+		m_buffer.as<T>()[m_length++] = _char;
+		m_buffer.as<T>()[m_length  ] = string_utils::null_terminator<T>;
+		return *this;
+	}
+	self_t& operator+=(const self_t& other)
+	{
+		if (m_length + other.get_length() + 1 >= get_capacity())
+			reserve(get_capacity() + get_capacity() / 2);
+		else
+			make_owned();
+
+		for (length_t i = 0; i < other.get_length(); i++)
+			m_buffer.as<T>()[m_length++] = other[i];
+
+		m_buffer.as<T>()[m_length] = string_utils::null_terminator<T>;
+		return *this;
+	}
+
+	self_t operator+(T _char) const { return self_t(*this) += _char; }
+	self_t operator+(const self_t& other) const { return self_t(*this) += other; }
+
 	bool operator==(const self_t& other) const { return string_utils::compare(cstring(), get_length(), other.cstring(), other.get_length()) == string_utils::compare_result_t::equal;   }
 	bool operator!=(const self_t& other) const { return string_utils::compare(cstring(), get_length(), other.cstring(), other.get_length()) != string_utils::compare_result_t::equal;   }
 	bool operator> (const self_t& other) const { return string_utils::compare(cstring(), get_length(), other.cstring(), other.get_length()) == string_utils::compare_result_t::greater; }
@@ -406,6 +434,30 @@ public:
 
 	const T& operator[](size_t index) const { return m_buffer[index]; }
 	T& operator[](size_t index) { return m_buffer[index]; }
+
+	self_t& operator+=(T _char)
+	{
+		if (m_length + 2 >= get_capacity())
+			reserve(get_capacity() + get_capacity() / 2);
+
+		m_buffer[m_length++] = _char;
+		m_buffer[m_length  ] = string_utils::null_terminator<T>;
+		return *this;
+	}
+	self_t& operator+=(const self_t& other)
+	{
+		if (m_length + other.get_length() + 1 >= get_capacity())
+			reserve(get_capacity() + get_capacity() / 2);
+
+		for (length_t i = 0; i < other.get_length(); i++)
+			m_buffer[m_length++] = other[i];
+
+		m_buffer[m_length] = string_utils::null_terminator<T>;
+		return *this;
+	}
+
+	self_t operator+(T _char)             const { return self_t(*this) += _char; }
+	self_t operator+(const self_t& other) const { return self_t(*this) += other; }
 
 	bool operator==(const self_t& other) const { return string_utils::compare(cstring(), get_length(), other.cstring(), other.get_length()) == string_utils::compare_result_t::equal;   }
 	bool operator!=(const self_t& other) const { return string_utils::compare(cstring(), get_length(), other.cstring(), other.get_length()) != string_utils::compare_result_t::equal;   }
