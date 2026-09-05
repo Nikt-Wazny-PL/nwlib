@@ -28,11 +28,11 @@ A small, dependency-free C++23 utility library made by Nikt-Wazny-PL. More-or-le
   * `nw::utils::random` - A lightweight pseudo-random number generator based on MurmurHash64.
   * `nw::utils::uuid` - A 128-bit randomly generated identifier. It does not conform to any UUID standard.
 
-## Supported Platforms
+<!-- ## Supported Platforms
   Currently, NwLib officially supports:
   * Windows
   
-  Linux support is currently in progress, with MacOS support being a possible future target.
+  Linux support is currently in progress, with MacOS support being a possible future target. -->
 
 ## Requirements
   * C++23-compatible compiler

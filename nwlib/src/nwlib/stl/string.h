@@ -81,6 +81,7 @@ constexpr auto compare(const T* cstring_a, length_t length_a, const T* cstring_b
 
 }
 
+
 template<typename T>
 class basic_string
 {
