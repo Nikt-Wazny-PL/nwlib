@@ -7,6 +7,7 @@ A small, dependency-free C++23 utility library made by Nikt-Wazny-PL. More-or-le
   `nw::geo` is a collection of geometry stuff - vectors, math functions etc! (kinda like glm but maybe a bit worse)
 
   * `nw::geo::vector<N, T>` - A vector of length N.
+  * `nw::geo::matrix<C, R, T>` - A matrix of collumns C and rows R
 
 ### `nw::stl` - Experimental
   `nw::stl` is a collection of stl-like containers - strings, vectors, iterators etc.

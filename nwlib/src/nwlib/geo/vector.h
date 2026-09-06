@@ -6,6 +6,7 @@
 #include <utility>
 
 #include "fwd_vector.h"
+#include "utils.h"
 
 namespace nw::geo {
 
@@ -22,8 +23,8 @@ struct vector<1, T>
 	constexpr vector(const vector<1, U>& other)
 		: x(other.x) {}
 
-	constexpr const T& operator[](size_t index) const { return *(&x + index); }
-	constexpr T&       operator[](size_t index)       { return *(&x + index); }
+	constexpr const T& operator[](size_t index) const { assert(index < get_element_count(*this)); return *(&x + index); }
+	constexpr T&       operator[](size_t index)       { assert(index < get_element_count(*this)); return *(&x + index); }
 };
 
 template<typename T>
@@ -52,8 +53,8 @@ struct vector<2, T>
 	constexpr explicit vector(const vector<2, U>& other)
 		: x(other.x), y(other.y) {}
 
-	constexpr const T& operator[](size_t index) const { return *(&x + index); }
-	constexpr T&       operator[](size_t index)       { return *(&x + index); }
+	constexpr const T& operator[](size_t index) const { assert(index < get_element_count(*this)); return *(&x + index); }
+	constexpr T&       operator[](size_t index)       { assert(index < get_element_count(*this)); return *(&x + index); }
 };
 
 template<typename T>
@@ -83,8 +84,8 @@ struct vector<3, T>
 	constexpr explicit vector(const vector<3, U>& other)
 		: x(other.x), y(other.y), z(other.z) {}
 
-	constexpr const T& operator[](size_t index) const { return *(&x + index); }
-	constexpr T&       operator[](size_t index)       { return *(&x + index); }
+	constexpr const T& operator[](size_t index) const { assert(index < get_element_count(*this)); return *(&x + index); }
+	constexpr T&       operator[](size_t index)       { assert(index < get_element_count(*this)); return *(&x + index); }
 };
 
 template<typename T>
@@ -127,19 +128,9 @@ struct vector<4, T>
 	constexpr explicit vector(const vector<4, U>& other)
 		: x(other.x), y(other.y), z(other.z), w(other.w) {}
 
-	constexpr const T& operator[](size_t index) const { return *(&x + index); }
-	constexpr T&       operator[](size_t index)       { return *(&x + index); }
+	constexpr const T& operator[](size_t index) const { assert(index < get_element_count(*this)); return *(&x + index); }
+	constexpr T&       operator[](size_t index)       { assert(index < get_element_count(*this)); return *(&x + index); }
 };
-
-
-template<uint32_t N, typename T>
-constexpr uint32_t get_element_count(const vector<N, T>& vector) { (void)vector; return N; }
-
-template<uint32_t N, typename T>
-constexpr const T* get_value_ptr(const vector<N, T>& vector) { return &vector.x; }
-
-template<uint32_t N, typename T>
-constexpr T* get_value_ptr(vector<N, T>& vector) { return &vector.x; }
 
 
 template<uint32_t N, typename T, uint32_t M, typename U>
