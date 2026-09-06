@@ -21,11 +21,15 @@ struct control_block
 	std::atomic<size_t> strong_count {};
 };
 
+template<typename T, typename... TArgs>
+control_block<T>* create_block(T*& instance, TArgs&&... args);
+
 }
 
 class ref_counted
 {
 	template<typename> friend class ref;
+	template<typename T, typename... TArgs> friend detail::control_block<T>* detail::create_block(T*&, TArgs&&...);
 public:
 	virtual ~ref_counted() {}
 
