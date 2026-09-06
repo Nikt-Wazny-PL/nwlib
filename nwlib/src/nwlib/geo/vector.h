@@ -22,7 +22,6 @@ struct vector<1, T>
 	constexpr vector(const vector<1, U>& other)
 		: x(other.x) {}
 
-	constexpr static uint32_t count() { return 1; }
 	constexpr const T& operator[](size_t index) const { return *(&x + index); }
 	constexpr T&       operator[](size_t index)       { return *(&x + index); }
 };
@@ -53,7 +52,6 @@ struct vector<2, T>
 	constexpr explicit vector(const vector<2, U>& other)
 		: x(other.x), y(other.y) {}
 
-	constexpr static uint32_t count() { return 2; }
 	constexpr const T& operator[](size_t index) const { return *(&x + index); }
 	constexpr T&       operator[](size_t index)       { return *(&x + index); }
 };
@@ -85,7 +83,6 @@ struct vector<3, T>
 	constexpr explicit vector(const vector<3, U>& other)
 		: x(other.x), y(other.y), z(other.z) {}
 
-	constexpr static uint32_t count() { return 3; }
 	constexpr const T& operator[](size_t index) const { return *(&x + index); }
 	constexpr T&       operator[](size_t index)       { return *(&x + index); }
 };
@@ -130,7 +127,6 @@ struct vector<4, T>
 	constexpr explicit vector(const vector<4, U>& other)
 		: x(other.x), y(other.y), z(other.z), w(other.w) {}
 
-	constexpr static uint32_t count() { return 4; }
 	constexpr const T& operator[](size_t index) const { return *(&x + index); }
 	constexpr T&       operator[](size_t index)       { return *(&x + index); }
 };
