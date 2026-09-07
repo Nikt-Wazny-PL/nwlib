@@ -13,8 +13,8 @@ namespace nw::mem {
 class arena
 {
 public:
-	constexpr static bool can_reallocate                   { true  }; // Can reallocate overall ?
-	constexpr static bool can_reallocate_without_ownership { false }; // Can reallocate when !m_buffer.has_ownership() ?
+	constexpr static bool can_reallocate                   { true }; // Can reallocate overall ?
+	constexpr static bool can_reallocate_without_ownership { true }; // Can reallocate when !m_buffer.has_ownership() ?
 
 public:
 	arena() = default;
@@ -31,6 +31,9 @@ public:
 	size_t   get_remaining() const { return get_capacity() - get_offset(); }
 
 	void* allocate(size_t size, size_t alignment = alignof(::max_align_t));
+
+	void set_mark(size_t mark) { assert(mark <= get_capacity()); m_offset = mark; }
+	void clear() { set_mark(0); }
 
 	arena& operator=(const arena& other) = delete;
 	arena& operator=(arena&& other) noexcept;
@@ -146,6 +149,8 @@ public:
 		: m_owner(&owner)
 	{
 		uint8_t* const u8instance = (uint8_t*)owner.allocate(sizeof(T), alignof(T));
+		assert(u8instance != nullptr);
+
 		new (u8instance) T(std::forward<TArgs>(args)...);
 
 		m_offset = u8instance - owner.get_u8memory();
@@ -232,6 +237,8 @@ public:
 		: m_owner(&owner), m_length(length)
 	{
 		uint8_t* const u8instance = (uint8_t*)owner.allocate(sizeof(T) * length, alignof(T));
+		assert(u8instance != nullptr);
+
 		m_offset = u8instance - owner.get_u8memory();
 
 		T* const instances = get();
