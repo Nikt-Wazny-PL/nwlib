@@ -1,5 +1,6 @@
 #include "arena.h"
 
+#include <algorithm>
 #include <cstddef>
 #include <cstring>
 
@@ -17,7 +18,7 @@ void* arena::allocate(size_t size, size_t alignment)
 	const auto aligned_offset = (m_offset + alignment - 1) & ~(alignment - 1);
 	const auto padding        = aligned_offset - m_offset;
 
-	while (padding + size <= get_remaining())
+	while (padding + size >= get_remaining())
 	{
 		if constexpr (can_reallocate)
 			reallocate();
@@ -34,6 +35,8 @@ void* arena::allocate(size_t size, size_t alignment)
 void arena::reallocate()
 {
 	size_t new_capacity = m_buffer.get_capacity() + m_buffer.get_capacity() / 2uz;
+	new_capacity = std::max(1024uz, new_capacity);
+
 	buffer new_buffer(new_capacity);
 
 	std::memcpy(new_buffer.get_memory(), m_buffer.get_memory(), m_offset);
