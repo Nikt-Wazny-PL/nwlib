@@ -228,7 +228,6 @@ class arena_box<T[]>
 	template<typename> friend class arena_box;
 public:
 	arena_box() = default;
-	template<typename... TArgs>
 	arena_box(arena& owner, size_t length)
 		: m_owner(&owner), m_length(length)
 	{
@@ -240,7 +239,6 @@ public:
 		for (size_t i = 0; i < length; i++)
 			new (instances + i) T();
 	}
-	template<typename... TArgs>
 	arena_box(const arena_box<void>& void_box, size_t length)
 		: m_owner(void_box.m_owner), m_offset(void_box.m_offset), m_length(length)
 	{

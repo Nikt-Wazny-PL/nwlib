@@ -4,6 +4,7 @@
 #include "utils.h"
 #include "vector.h"
 
+#include <cassert>
 #include <cstdint>
 
 namespace nw::geo {
@@ -27,7 +28,7 @@ struct matrix
 	template<typename... Us>
 	constexpr explicit matrix(const Us&... values)
 	{
-		static_assert(sizeof...(values) < C*R, "value-pack too big!");
+		static_assert(sizeof...(values) <= C*R, "value-pack too big!");
 
 		uint32_t index = 0u;
 		T* const vptr  = get_value_ptr(*this);
@@ -37,7 +38,7 @@ struct matrix
 	template<uint32_t N, typename U>
 	constexpr explicit matrix(const U (&values)[N])
 	{
-		static_assert(N < C*R, "value-pack too big!");
+		static_assert(N <= C*R, "value-pack too big!");
 
 		T* const vptr  = get_value_ptr(*this);
 
@@ -45,9 +46,9 @@ struct matrix
 			vptr[i] = values[i];
 	}
 	template<uint32_t N, typename U>
-	constexpr explicit matrix(const vector<R, U> (&values)[N])
+	constexpr explicit matrix(const row_t (&values)[N])
 	{
-		static_assert(N < C, "value-pack too big!");
+		static_assert(N <= C, "value-pack too big!");
 
 		for (uint32_t i = 0; i < R; i++)
 			rows[i] = values[i];
@@ -57,18 +58,24 @@ struct matrix
 	{
 		for (uint32_t i = 0; i < C; i++) {
 			for (uint32_t j = 0; j < R; j++)
-				rows[i][j] = other[j, i];
+				rows[i][j] = other.rows[i][j];
 		}
 	}
 
 	constexpr const T& operator[](uint32_t x, uint32_t y) const
 	{
 		assert(x + y * R < C * R);
+		assert(x < R);
+		assert(y < C);
+
 		return rows[y][x];
 	}
 	constexpr T& operator[](uint32_t x, uint32_t y)
 	{
 		assert(x + y * R < C * R);
+		assert(x < R);
+		assert(y < C);
+
 		return rows[y][x];
 	}
 
@@ -83,5 +90,8 @@ struct matrix
 		return rows[index];
 	}
 };
+
+// if you really think about it.. this aint THAT wrong.
+// using rgba_screen_1920_1080 = matrix<1080, 1920, uint32_t>;
 
 }

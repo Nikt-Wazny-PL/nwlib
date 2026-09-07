@@ -1,14 +1,37 @@
 #pragma once
 
-#include <cmath>
-#include <cstddef>
-#include <type_traits>
-#include <utility>
-
 #include "fwd_vector.h"
 #include "utils.h"
 
+#include <cmath>
+#include <cstdint>
+#include <type_traits>
+#include <cstddef>
+#include <utility>
+
 namespace nw::geo {
+
+namespace detail {
+
+template<typename T>
+struct is_vector : std::false_type {};
+
+template<uint32_t N, typename T>
+struct is_vector<vector<N, T>> : std::true_type {};
+
+template<typename... Us>
+constexpr uint32_t sum_counts(const Us&... vectors)
+{
+
+	uint32_t result {};
+	((result += get_element_count(vectors)), ...);
+
+	return result;
+}
+
+
+
+}
 
 template<typename T>
 struct vector<1, T>
