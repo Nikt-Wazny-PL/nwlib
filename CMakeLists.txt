@@ -7,3 +7,7 @@ project(mwlib LANGUAGES CXX)
 project(mwlib LANGUAGES C)
 
 add_subdirectory("${CMAKE_SOURCE_DIR}/nwlib")
+
+if (NWLIB_BUILD_TESTS)
+add_subdirectory("${CMAKE_SOURCE_DIR}/nwlib_testing")
+endif()
