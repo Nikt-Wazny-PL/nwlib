@@ -61,8 +61,8 @@ struct arena_allocator
 	explicit arena_allocator(arena& arena)
 		: owner(arena) {}
 
-	T* allocate(size_t size) { owner.allocate(size * sizeof(T), alignof(T)); }
-	T* deallocate(T*, size_t) {}
+	T*   allocate(size_t size) { return owner.allocate(size * sizeof(T), alignof(T)); }
+	void deallocate(T*, size_t) {}
 
 	bool operator==(const arena_allocator<T>& other) const { return &owner == &other.owner; }
 	bool operator!=(const arena_allocator<T>& other) const { return &owner != &other.owner; }
