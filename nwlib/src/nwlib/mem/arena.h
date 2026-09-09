@@ -49,7 +49,7 @@ private:
 template<typename T>
 struct arena_allocator
 {
-	arena& owner;
+	arena* owner {};
 
 	using value_type = T;
 	
@@ -59,9 +59,9 @@ struct arena_allocator
 	using is_always_equal                        = std::false_type;
 
 	explicit arena_allocator(arena& arena)
-		: owner(arena) {}
+		: owner(&arena) {}
 
-	T*   allocate(size_t size) { return owner.allocate(size * sizeof(T), alignof(T)); }
+	T*   allocate(size_t size) { return owner->allocate(size * sizeof(T), alignof(T)); }
 	void deallocate(T*, size_t) {}
 
 	bool operator==(const arena_allocator<T>& other) const { return &owner == &other.owner; }
