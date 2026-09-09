@@ -119,6 +119,10 @@ struct vector : public detail::vector_impl<N, T>
 			static_assert(detail::is_vector<int>::value, "Invalid datamember!");
 	}
 
+	// this->value_ptr()
+	// the 'this' is required for whatever reason
+	// ;-;
+
 	constexpr T*       begin()        { return this->value_ptr() + 0; }
 	constexpr T*       end()          { return this->value_ptr() + N; }
 	constexpr const T* begin()  const { return this->value_ptr() + 0; }

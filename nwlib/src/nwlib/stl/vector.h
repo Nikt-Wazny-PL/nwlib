@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../mem/arena.h"
+
 #include <cassert>
 #include <cstddef>
 #include <initializer_list>
@@ -7,15 +9,21 @@
 #include <memory>
 #include <type_traits>
 
+
 namespace nw::stl {
 
 template<typename T, typename TAllocator = std::allocator<T>>
 class vector
 {
 public:
+	using self_t = vector<T, TAllocator>;
+
+public:
 	vector() = default;
-	vector(size_t length) { resize(length); }
-	vector(const T* buffer, size_t length)
+	explicit vector(size_t length, const TAllocator& allocator = {}) 
+		: m_allocator(allocator) { resize(length); }
+	vector(const T* buffer, size_t length, const TAllocator& allocator = {})
+		: m_allocator(allocator)
 	{
 		if (!buffer || length == 0)
 			return;
@@ -24,12 +32,11 @@ public:
 		while (m_length != length)
 			new (m_buffer + m_length++) T(buffer[m_length - 1]);
 	}
-	vector(std::initializer_list<T> list)
-		: vector(list.begin(), list.size()) {}
-	vector(const vector<T>& other)
-		: vector(other.m_buffer, other.m_length)
-		, m_allocator(other.m_allocator) {}
-	vector(vector<T>&& other) noexcept
+	vector(std::initializer_list<T> list, const TAllocator& allocator = {})
+		: vector(list.begin(), list.size(), allocator) {}
+	vector(const self_t& other)
+		: vector(other.m_buffer, other.m_length), m_allocator(other.m_allocator) {}
+	vector(self_t&& other) noexcept
 		: m_buffer(other.m_buffer)
 		, m_length(other.m_length)
 		, m_capacity(other.m_capacity)
@@ -50,8 +57,6 @@ public:
 	const T* end()    const { return m_buffer + m_length; }
 	T*       begin()        { return m_buffer; }
 	T*       end()          { return m_buffer + m_length; }
-	const T* cbegin() const { return m_buffer; }
-	const T* cend()   const { return m_buffer + m_length; }
 
 	T*     get_buffer()   const { return m_buffer; }
 	size_t get_length()   const { return m_length; }
@@ -91,7 +96,7 @@ public:
 			while (m_length < new_length)
 				new (&m_buffer[m_length++]) T();
 		}
-		else if (new_length < m_length) 
+		else if (new_length < m_length)
 		{
 			if constexpr (std::is_trivially_destructible_v<T>)
 			{
@@ -178,7 +183,7 @@ public:
 		delete[] indices;
 	}
 
-	vector<T>& operator=(const vector<T>& other)
+	self_t& operator=(const self_t& other)
 	{
 		if (this != &other)
 		{
@@ -199,7 +204,7 @@ public:
 
 		return *this;
 	}
-	vector<T>& operator=(vector<T>&& other) noexcept
+	self_t& operator=(self_t&& other) noexcept
 	{
 		if (this != &other)
 		{
@@ -222,8 +227,8 @@ public:
 	const T& operator[](size_t index) const { assert(index < m_length); return *(m_buffer + index); }
 	T&       operator[](size_t index)       { assert(index < m_length); return *(m_buffer + index); }
 
-	vector<T>& operator+=(const T& value) { push(value);            return *this; }
-	vector<T>& operator+=(T&& value)      { push(std::move(value)); return *this; }
+	self_t& operator+=(const T& value) { push(value);            return *this; }
+	self_t& operator+=(T&& value)      { push(std::move(value)); return *this; }
 
 private:
 	void reallocate() { reserve(m_capacity + m_capacity / 2); }
@@ -243,5 +248,8 @@ private:
 	size_t     m_capacity  {};
 	TAllocator m_allocator {};
 };
+
+template<typename T>
+using arena_vector = vector<T, mem::arena_allocator<T>>;
 
 }
