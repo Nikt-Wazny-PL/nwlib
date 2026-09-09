@@ -2,8 +2,12 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <type_traits>
 
 namespace nw {
+
+using usize = size_t;
+using isize = std::make_signed_t<usize>;
 
 using u8  = uint8_t;
 using u16 = uint16_t;

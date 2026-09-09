@@ -9,7 +9,6 @@
 #include <memory>
 #include <type_traits>
 
-
 namespace nw::stl {
 
 template<typename T, typename TAllocator = std::allocator<T>>
@@ -19,10 +18,11 @@ public:
 	using self_t = vector<T, TAllocator>;
 
 public:
-	vector() = default;
-	explicit vector(size_t length, const TAllocator& allocator = {}) 
+	constexpr explicit vector(const TAllocator& allocator = {})
+		: m_allocator(allocator) {}
+	constexpr explicit vector(size_t length, const TAllocator& allocator = {}) 
 		: m_allocator(allocator) { resize(length); }
-	vector(const T* buffer, size_t length, const TAllocator& allocator = {})
+	constexpr vector(const T* buffer, size_t length, const TAllocator& allocator = {})
 		: m_allocator(allocator)
 	{
 		if (!buffer || length == 0)
@@ -32,11 +32,11 @@ public:
 		while (m_length != length)
 			new (m_buffer + m_length++) T(buffer[m_length - 1]);
 	}
-	vector(std::initializer_list<T> list, const TAllocator& allocator = {})
+	constexpr vector(std::initializer_list<T> list, const TAllocator& allocator = {})
 		: vector(list.begin(), list.size(), allocator) {}
-	vector(const self_t& other)
+	constexpr vector(const self_t& other)
 		: vector(other.m_buffer, other.m_length), m_allocator(other.m_allocator) {}
-	vector(self_t&& other) noexcept
+	constexpr vector(self_t&& other) noexcept
 		: m_buffer(other.m_buffer)
 		, m_length(other.m_length)
 		, m_capacity(other.m_capacity)
@@ -46,23 +46,23 @@ public:
 		other.m_length   = 0uz;
 		other.m_capacity = 0uz;
 	}
-	~vector()
+	constexpr ~vector()
 	{
 		call_dtors();
 
 		::operator delete(m_buffer);
 	}
 
-	const T* begin()  const { return m_buffer; }
-	const T* end()    const { return m_buffer + m_length; }
-	T*       begin()        { return m_buffer; }
-	T*       end()          { return m_buffer + m_length; }
+	constexpr const T* begin()  const { return m_buffer; }
+	constexpr const T* end()    const { return m_buffer + m_length; }
+	constexpr T*       begin()        { return m_buffer; }
+	constexpr T*       end()          { return m_buffer + m_length; }
 
-	T*     get_buffer()   const { return m_buffer; }
-	size_t get_length()   const { return m_length; }
-	size_t get_capacity() const { return m_capacity; }
+	constexpr T*     get_buffer()   const { return m_buffer; }
+	constexpr size_t get_length()   const { return m_length; }
+	constexpr size_t get_capacity() const { return m_capacity; }
 
-	bool reserve(size_t new_capacity)
+	constexpr bool reserve(size_t new_capacity)
 	{
 		if (new_capacity <= m_capacity)
 			return false;
@@ -86,8 +86,8 @@ public:
 
 		return true;
 	}
-	
-	void resize(size_t new_length)
+
+	constexpr void resize(size_t new_length)
 	{
 		if (new_length > m_length)
 		{
@@ -110,7 +110,7 @@ public:
 	}
 
 	template<typename... Ts>
-	T& push(Ts&&... args)
+	constexpr T& push(Ts&&... args)
 	{
 		if (m_length + 1 >= m_capacity)
 			reallocate();
@@ -118,7 +118,7 @@ public:
 		new (m_buffer + m_length++) T(std::forward<Ts>(args)...);
 	}
 
-	void remove(size_t index)
+	constexpr void remove(size_t index)
 	{
 		assert(index < m_length);
 
@@ -134,7 +134,7 @@ public:
 		}
 	}
 
-	void swapback_remove(size_t index)
+	constexpr void swapback_remove(size_t index)
 	{
 		assert(index < m_length);
 
@@ -149,7 +149,7 @@ public:
 		m_length--;
 	}
 
-	void remove_all(auto&& predicate)
+	constexpr void remove_all(auto&& predicate)
 	{
 		size_t* indices = new size_t[m_length];
 		size_t  index_count {};
@@ -166,7 +166,7 @@ public:
 		delete[] indices;
 	}
 
-	void swapback_remove_all(auto&& predicate)
+	constexpr void swapback_remove_all(auto&& predicate)
 	{
 		size_t* indices = new size_t[m_length];
 		size_t  index_count {};
@@ -183,7 +183,7 @@ public:
 		delete[] indices;
 	}
 
-	self_t& operator=(const self_t& other)
+	constexpr self_t& operator=(const self_t& other)
 	{
 		if (this != &other)
 		{
@@ -204,7 +204,7 @@ public:
 
 		return *this;
 	}
-	self_t& operator=(self_t&& other) noexcept
+	constexpr self_t& operator=(self_t&& other) noexcept
 	{
 		if (this != &other)
 		{
@@ -224,11 +224,11 @@ public:
 		return *this;
 	}
 
-	const T& operator[](size_t index) const { assert(index < m_length); return *(m_buffer + index); }
-	T&       operator[](size_t index)       { assert(index < m_length); return *(m_buffer + index); }
+	constexpr const T& operator[](size_t index) const { assert(index < m_length); return *(m_buffer + index); }
+	constexpr T&       operator[](size_t index)       { assert(index < m_length); return *(m_buffer + index); }
 
-	self_t& operator+=(const T& value) { push(value);            return *this; }
-	self_t& operator+=(T&& value)      { push(std::move(value)); return *this; }
+	constexpr self_t& operator+=(const T& value) { push(value);            return *this; }
+	constexpr self_t& operator+=(T&& value)      { push(std::move(value)); return *this; }
 
 private:
 	void reallocate() { reserve(m_capacity + m_capacity / 2); }
