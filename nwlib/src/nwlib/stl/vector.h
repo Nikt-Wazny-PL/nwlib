@@ -1,83 +1,111 @@
 #pragma once
 
+#include "../types.h"
 #include "../mem/arena.h"
 
-#include <cassert>
-#include <cstddef>
 #include <initializer_list>
-#include <new>
 #include <memory>
 #include <type_traits>
 
 namespace nw::stl {
 
+namespace detail {
+
+template<typename T>
+constexpr void call_dtors(T* values, usize count)
+{
+	if constexpr (std::is_trivially_destructible_v<T>)
+		return;
+
+	for (usize i = 0; i < count; i++)
+		(values + i)->~T();
+}
+
+template<typename T>
+constexpr void move_buffer(T* source, T* destination, usize count)
+{
+	for (usize i = 0; i < count; i++)
+	{
+		if (std::is_nothrow_move_constructible_v<T>)
+			new (destination + i) T(std::move(source[i]));
+		else
+			new (destination + i) T(source[i]);
+	}
+}
+
+template<typename T>
+constexpr void copy_buffer(T* source, T* destination, usize count)
+{
+	for (usize i = 0; i < count; i++)
+		new (destination + i) T(source[i]);
+}
+
+}
+
 template<typename T, typename TAllocator = std::allocator<T>>
 class vector
 {
 public:
-	using self_t = vector<T, TAllocator>;
+	using value_t     = T;
+	using allocator_t = TAllocator;
+	using iterator_t  = T*;
+	using self_t      = vector<T, allocator_t>;
+
+	constexpr static float growth_factor { 1.5f };
 
 public:
-	constexpr explicit vector(const TAllocator& allocator = {})
+	explicit vector(const TAllocator& allocator = {})
 		: m_allocator(allocator) {}
-	constexpr explicit vector(size_t length, const TAllocator& allocator = {}) 
-		: m_allocator(allocator) { resize(length); }
-	constexpr vector(const T* buffer, size_t length, const TAllocator& allocator = {})
+	explicit vector(usize capacity, const TAllocator& allocator = {})
+		: m_allocator(allocator) { reserve(capacity); }
+	vector(const T* buffer, usize count, const TAllocator& allocator = {})
 		: m_allocator(allocator)
 	{
-		if (!buffer || length == 0)
+		if (!m_buffer)
 			return;
 
-		reserve(length);
-		while (m_length != length)
-			new (m_buffer + m_length++) T(buffer[m_length - 1]);
+		reserve(count);
+
+		detail::copy_buffer(buffer, m_buffer, count);
+		m_length = count;
 	}
-	constexpr vector(std::initializer_list<T> list, const TAllocator& allocator = {})
+	vector(std::initializer_list<T> list, const TAllocator& allocator = {})
 		: vector(list.begin(), list.size(), allocator) {}
-	constexpr vector(const self_t& other)
-		: vector(other.m_buffer, other.m_length), m_allocator(other.m_allocator) {}
-	constexpr vector(self_t&& other) noexcept
-		: m_buffer(other.m_buffer)
-		, m_length(other.m_length)
-		, m_capacity(other.m_capacity)
-		, m_allocator(other.m_allocator)
+	vector(const self_t& other)
+		: m_buffer(other.get_buffer(), other.get_length(), other.get_allocator()) {}
+	vector(self_t&& other) noexcept
+		: m_buffer(other.get_buffer())
+		, m_length(other.get_length())
+		, m_capacity(other.get_capacity())
+		, m_allocator(std::move(other.get_allocator()))
 	{
 		other.m_buffer   = nullptr;
 		other.m_length   = 0uz;
 		other.m_capacity = 0uz;
 	}
-	constexpr ~vector()
+	~vector() { detail::call_dtors(m_buffer, m_length); m_allocator.deallocate(m_buffer, m_length); }
+
+	const T* begin() const { return m_buffer; }
+	const T* end()   const { return m_buffer + m_length; }
+	T*       begin()       { return m_buffer; }
+	T*       end()         { return m_buffer + m_length; }
+
+	T*    get_buffer()   const { return m_buffer;   }
+	usize get_length()   const { return m_length;   }
+	usize get_capacity() const { return m_capacity; }
+
+	TAllocator&       get_allocator()       { return m_allocator; }
+	const TAllocator& get_allocator() const { return m_allocator; }
+
+	bool reserve(usize new_capacity)
 	{
-		call_dtors();
-
-		::operator delete(m_buffer);
-	}
-
-	constexpr const T* begin()  const { return m_buffer; }
-	constexpr const T* end()    const { return m_buffer + m_length; }
-	constexpr T*       begin()        { return m_buffer; }
-	constexpr T*       end()          { return m_buffer + m_length; }
-
-	constexpr T*     get_buffer()   const { return m_buffer; }
-	constexpr size_t get_length()   const { return m_length; }
-	constexpr size_t get_capacity() const { return m_capacity; }
-
-	constexpr bool reserve(size_t new_capacity)
-	{
-		if (new_capacity <= m_capacity)
+		if (new_capacity <= m_length)
 			return false;
 
 		T* const new_buffer = m_allocator.allocate(new_capacity);
 
-		for (size_t i = 0; i < m_length; i++)
-		{
-			if constexpr (std::is_nothrow_move_constructible_v<T>)
-				new (new_buffer + i) T(std::move(m_buffer[i]));
-			else
-				new (new_buffer + i) T(m_buffer[i]);
-		}
-
-		call_dtors();
+		detail::move_buffer(m_buffer, new_buffer, m_length);
+		detail::call_dtors(m_buffer, m_length);
 
 		m_allocator.deallocate(m_buffer, m_capacity);
 
@@ -86,166 +114,144 @@ public:
 
 		return true;
 	}
-
-	constexpr void resize(size_t new_length)
+	
+	template<typename... Ts>
+	void resize(usize new_length, Ts&&... args)
 	{
-		if (new_length > m_length)
+		if (new_length < m_length)
 		{
-			reserve(new_length);
+			const usize count  = m_length - new_length;
+			const usize offset = m_length - count;
 
+			detail::call_dtors(m_buffer + offset, count);
+		}
+		else if (new_length > m_length)
+		{
+			if (new_length > m_capacity)
+				reserve(new_length);
+				
 			while (m_length < new_length)
-				new (&m_buffer[m_length++]) T();
+				new (m_buffer + m_length++) T(std::forward<Ts>(args)...);
 		}
-		else if (new_length < m_length)
-		{
-			if constexpr (std::is_trivially_destructible_v<T>)
-			{
-				m_length = new_length;
-				return;
-			}
 
-			while (new_length > m_length)
-				(m_buffer + --m_length)->~T();
-		}
+		m_length = new_length;
 	}
 
 	template<typename... Ts>
-	constexpr T& push(Ts&&... args)
+	T& push(Ts&&... args)
 	{
-		if (m_length + 1 >= m_capacity)
+		if (m_length + 1 < m_capacity)
 			reallocate();
 
-		new (m_buffer + m_length++) T(std::forward<Ts>(args)...);
+		T* const instance_ptr = new (m_buffer + m_length++) T(std::forward<Ts>(args)...);
+		return *instance_ptr;
 	}
 
-	constexpr void remove(size_t index)
+	void remove_at(usize index)
 	{
-		assert(index < m_length);
+		if (index > m_length)
+			return;
 
-		if constexpr (!std::is_trivially_destructible_v<T>)
-			(m_buffer + index)->~T();
-
-		for (size_t i = index; i < m_length - index; i++)
-		{
-			if constexpr (std::is_nothrow_move_constructible_v<T>)
-				new (m_buffer + i) T(std::move(m_buffer[i + 1]));
-			else 
-				new (m_buffer + i) T(m_buffer[i + 1]);;
-		}
-	}
-
-	constexpr void swapback_remove(size_t index)
-	{
-		assert(index < m_length);
-
-		if constexpr (!std::is_trivially_destructible_v<T>)
-			(m_buffer + index)->~T();
-
-		if constexpr (std::is_nothrow_move_constructible_v<T>)
-			new (m_buffer + index) T(std::move(m_buffer[m_length - 1]));
-		else
-			new (m_buffer + index) T(m_buffer[m_length - 1]);
+		detail::call_dtors(m_buffer + index, 1);
+		for (usize i = index; i < m_length - 1; i++)
+			new (m_buffer + index) T(std::move(m_buffer[index + 1]));
 
 		m_length--;
 	}
 
-	constexpr void remove_all(auto&& predicate)
+	void swapback_remove_at(usize index)
 	{
-		size_t* indices = new size_t[m_length];
-		size_t  index_count {};
+		if (index > m_length)
+			return;
 
-		for (size_t i = 0; i < m_length; i++)
-		{
-			if (predicate(m_buffer[i]))
-				*(indices + index_count++) = i;
-		}
+		detail::call_dtors(m_buffer + index, 1);
+		new (m_buffer + index) T(std::move(m_buffer[m_length - 1]));
+		detail::call_dtors(m_buffer + m_length - 1, 1);
 
-		for (size_t i = 0; i < index_count; i++)
-			remove(*(indices + i)); // bulk remove -- no branches
-
-		delete[] indices;
+		m_length--;
 	}
 
-	constexpr void swapback_remove_all(auto&& predicate)
+	isize find(const T& element)
 	{
-		size_t* indices = new size_t[m_length];
-		size_t  index_count {};
-
-		for (size_t i = 0; i < m_length; i++)
+		for (usize i = 0; i < m_length; i++)
 		{
-			if (predicate(m_buffer[i]))
-				*(indices + index_count++) = i;
+			if (m_buffer[i] == element)
+				return i;
 		}
 
-		for (size_t i = 0; i < index_count; i++)
-			swapback_remove(*(indices + i)); // bulk remove -- no branches
-
-		delete[] indices;
+		return -1z;
 	}
 
-	constexpr self_t& operator=(const self_t& other)
+	self_t& operator=(const self_t& other)
 	{
-		if (this != &other)
-		{
-			call_dtors();
-			::operator delete(m_buffer);
+		if (this == &other)
+			return *this;
 
-			if (!other.m_buffer || other.m_length == 0)
-				return;
-
-			m_length = 0;
-
-			reserve(other.m_length);
-			while (m_length != other.m_length)
-				new (m_buffer + m_length++) T(other.m_buffer[m_length - 1]);
-
-			m_allocator = other.m_allocator;
-		}
+		detail::call_dtors(m_buffer, m_length);
+		
+		reserve(other.get_length());
+		detail::copy_buffer(other.get_buffer(), m_buffer, other.get_length());
 
 		return *this;
 	}
-	constexpr self_t& operator=(self_t&& other) noexcept
+	self_t& operator=(self_t&& other) noexcept
 	{
-		if (this != &other)
-		{
-			call_dtors();
-			::operator delete(m_buffer);
+		if (this == &other)
+			return *this;
 
-			m_buffer    = other.m_buffer;
-			m_length    = other.m_length;
-			m_capacity  = other.m_capacity;
-			m_allocator = other.m_allocator;
-	
-			other.m_buffer   = nullptr;
-			other.m_length   = 0uz;
-			other.m_capacity = 0uz;
-		}
+		detail::call_dtors(m_buffer, m_length);
+		m_allocator.deallocate(m_buffer, m_capacity);
+
+		m_buffer    = other.get_buffer();
+		m_length    = other.get_length();
+		m_capacity  = other.get_capacity();
+		m_allocator = std::move(other.get_allocator());
+
+		other.m_buffer   = nullptr;
+		other.m_length   = 0uz;
+		other.m_capacity = 0uz;
 
 		return *this;
 	}
 
-	constexpr const T& operator[](size_t index) const { assert(index < m_length); return *(m_buffer + index); }
-	constexpr T&       operator[](size_t index)       { assert(index < m_length); return *(m_buffer + index); }
+	const T& operator[](usize index) const { assert(index < m_length); return *(m_buffer + index); }
+	T&       operator[](usize index)       { assert(index < m_length); return *(m_buffer + index); }
 
-	constexpr self_t& operator+=(const T& value) { push(value);            return *this; }
-	constexpr self_t& operator+=(T&& value)      { push(std::move(value)); return *this; }
+	self_t& operator+=(const T& instance) { push(instance); return *this; }
+	self_t& operator+=(T&& instance)      { push(std::move(instance)); return *this; }
+
+	self_t operator+(const T& instance) const { return self_t(*this) += instance; }
+	self_t operator+(T&& instance)      const { return self_t(*this) += std::move(instance); }
+
+	bool operator==(const self_t& other) const
+	{
+		if (m_length != other.get_length())
+			return false;
+
+		for (usize i = 0; i < m_length; i++)
+		{
+			if (m_buffer[i] != other.get_buffer()[i])
+				return false;
+		}
+
+		if constexpr (!std::allocator_traits<TAllocator>::is_always_equal)
+		{
+			if (m_allocator != other.get_allocator())
+				return false;
+		}
+
+		return true;
+	}
+	bool operator!=(const self_t& other) const { return !(*this == other); }
 
 private:
 	void reallocate() { reserve(m_capacity + m_capacity / 2); }
 
-	void call_dtors()
-	{
-		if constexpr (std::is_trivially_destructible_v<T>)
-			return;
-
-		for (size_t i = 0; i < m_length; i++)
-			(m_buffer + i)->~T();
-	}
-
 private:
-	T*         m_buffer    {};
-	size_t     m_length    {};
-	size_t     m_capacity  {};
+	T*    m_buffer   {};
+	usize m_length   {};
+	usize m_capacity {};
+
 	TAllocator m_allocator {};
 };
 
